@@ -1,38 +1,27 @@
 pipeline {
-    
-	agent any
-/*	
-	tools {
-        maven "maven3"
+    agent any
+
+    tools {
+        maven "MAVEN3"
+        jdk "OracleJDK8"
     }
-*/	
+
     environment {
-        NEXUS_VERSION = "nexus3"
-        NEXUS_PROTOCOL = "http"
-        NEXUS_URL = "13.235.91.193:8081"
-        NEXUS_REPOSITORY = "vprofile-release"
-	    NEXUS_GRP_REPO    = "vprofile-grp-repo"
-        NEXUS_LOGIN = "nexuslogin"
-        ARTVERSION = "${env.BUILD_ID}"
-        NEXUSPORT = "8081"
-        NEXUSIP = "13.235.91.193"
-        SNAP_REPO = "vprofile-snapshot"
-        CENTRAL_REPO = "vprofile-maven-central"
-        NEXUS_USER = "admin"
-        NEUXS_PASS = "admin123"
+        SNAP_REPO = 'vprofile-snapshot'
+        NEXUS_USER = 'admin'
+        NEXUS_PASS = 'admin123'
+        CENTRAL_REPO = 'vpro-maven-central'
+        NEXUS_GRP_REPO = 'vpro-maven-group'
+        NEXUSIP = '172.31.6.135'
+        NEXUSPORT = '8081'
+        RELEASE_REPO = 'vprofile-release'
+        NEXUS_LOGIN = 'nexuslogin'
+    
     }
-	
     stages{
-        
-        stage('BUILD'){
-            steps {
-                sh 'mvn clean install -DskipTests'
-            }
-            post {
-                success {
-                    echo 'Now Archiving...'
-                    archiveArtifacts artifacts: '**/target/*.war'
-                }
+        stage ('BUILD'){
+            steps{
+                sh 'mvn -s settings.xml -DskipTests install'
             }
         }
     }
