@@ -70,7 +70,7 @@ pipeline {
                 }
             }
         }
-        stage("UploadArtifact") {
+        stage ("UploadArtifact") {
             steps {
                 nexusArtifactUploader(
                     nexusVersion: 'nexus3',
@@ -80,13 +80,15 @@ pipeline {
                     version: "${env.BUILD_ID}-${env.BUILD_TIMESTAMP}",
                     repository: "${RELEASE_REPO}",
                     credentialsId: "${NEXUS_LOGIN}",
-                    artifacts: [
-                        [artifactId: vproapp,
-                        classifier: '',
-                        file: target/vprofile-v2.war,
-                        type: 'war']
-                    ]
-                );
+                        artifacts: [
+                            [
+                                 artifactId: 'vprofile-app', // Define your artifactId here
+                                 classifier: '',
+                                 file: 'target/vprofile-v2.war', // Ensure this path is correct and exists after the build
+                                 type: 'war'
+                            ]
+                        ]
+                )
             }
         }
     }
