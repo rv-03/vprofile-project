@@ -16,6 +16,8 @@ pipeline {
         NEXUSPORT = '8081'
         RELEASE_REPO = 'vprofile-release'
         NEXUS_LOGIN = 'nexuslogin'
+        SONARSERVER = 'sonarserver'
+        SONARSCANNER = 'sonarscanner'
     
     }
     stages{
@@ -38,6 +40,21 @@ pipeline {
         stage ('Checkstyle Analysis') {
             steps {
                 sh 'mvn checkstyle:checkstyle'
+            }
+        }
+        stage ('Sonarqube Analysis') {
+            environment {
+                scannerHome = tool "${SONARSCANNER}"
+            }
+            steps {
+                sh '''${scannerHome}/bin/sonar-scanner -Dsonar.projectKey=vprofile \
+                   -Dsonar.projectName=vprofile-repo \
+                   -Dsonar.projectVersion=1.0 \
+                   -Dsonar.sources=src/ \
+                   -Dsonar.java.binaries=target/test-classes/com/visualpathit/account/controllerTest/ \
+                   -Dsonar.junit.reportsPath=target/surefire-reports/ \
+                   -Dsonar.jacoco.reportsPath=target/jacoco.exec \
+                   -Dsonar.java.checkstyle.reportPaths=target/checkstyle-result.xml'''
             }
         }
     }
