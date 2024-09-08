@@ -14,10 +14,17 @@ pipeline {
         NEXUS_GRP_REPO = 'vpro-maven-group'
         NEXUSIP = '172.31.6.135'
         NEXUSPORT = '8081'
-        RELEASE_REPO = 'vprofile-release'
+        NEXUS_REPOSITORY = 'vprofile-release'
         NEXUS_LOGIN = 'nexuslogin'
         SONARSERVER = 'sonarserver'
         SONARSCANNER = 'sonarscanner'
+        NEXUS_PROTOCOL = 'http'
+        NEXUS_VERSION = 'nexus3'
+        NEXUS_REPOGRP_ID = 'QA'
+        NEXUS_URL = "${NEXUSIP}:${NEXUSPORT}"
+        ARTVERSION = "${env.BUILD_ID}-${env.BUILD_TIMESTAMP}"
+        NEXUS_CREDENTIAL_ID = "${NEXUS_LOGIN}"
+
     
     }
 
@@ -43,7 +50,7 @@ pipeline {
                 sh 'mvn checkstyle:checkstyle'
             }
         }
-        stage ('SonarQuBe Analysis') {
+        stage ('SonarQube Analysis') {
             environment {
                 scannerHome = tool "${SONARSCANNER}"
             }
@@ -64,6 +71,42 @@ pipeline {
             steps {
                 timeout (time: 1, unit: 'MINUTES' ) {
                     waitForQualityGate abortPipeline: true 
+                }
+            }
+        }
+        stage("Publish to Nexus Repository Manager") {
+            steps {
+                script {
+                    pom = readMavenPom file: "pom.xml";
+                    filesByGlob = findFiles(glob: "target/*.${pom.packaging}");
+                    echo "${filesByGlob[0].name} ${filesByGlob[0].path} ${filesByGlob[0].directory} ${filesByGlob[0].length} ${filesByGlob[0].lastModified}"
+                    artifactPath = filesByGlob[0].path;
+                    artifactExists = fileExists artifactPath;
+                    if(artifactExists) {
+                        echo "*** File: ${artifactPath}, group: ${pom.groupId}, packaging: ${pom.packaging}, version ${pom.version} ARTVERSION";
+                        nexusArtifactUploader(
+                            nexusVersion: NEXUS_VERSION,
+                            protocol: NEXUS_PROTOCOL,
+                            nexusUrl: NEXUS_URL,
+                            groupId: NEXUS_REPOGRP_ID,
+                            version: ARTVERSION,
+                            repository: NEXUS_REPOSITORY,
+                            credentialsId: NEXUS_CREDENTIAL_ID,
+                            artifacts: [
+                                [artifactId: pom.artifactId,
+                                classifier: '',
+                                file: artifactPath,
+                                type: pom.packaging],
+                                [artifactId: pom.artifactId,
+                                classifier: '',
+                                file: "pom.xml",
+                                type: "pom"]
+                            ]
+                        );
+                    } 
+		            else {
+                        error "*** File: ${artifactPath}, could not be found";
+                    }
                 }
             }
         }
